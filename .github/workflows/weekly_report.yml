@@ -13,6 +13,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug - verify commit and code
+        run: |
+          echo "=== 現在のコミット ==="
+          git log --oneline -3
+          echo "=== fetcher.py の MODELS/FALLBACK_MODELS ==="
+          grep -A 8 "MODELS\s*=" report/fetcher.py | head -20
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
