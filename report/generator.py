@@ -37,6 +37,16 @@ CATEGORY_COLORS = {
 }
 
 
+def _ttc_subfont_index(path: str) -> int:
+    idx_file = path + ".ttc_idx"
+    if os.path.exists(idx_file):
+        try:
+            return int(open(idx_file).read().strip())
+        except Exception:
+            pass
+    return 0
+
+
 def _register_fonts() -> tuple[str, str]:
     regular = os.path.join(FONTS_DIR, "NotoSansJP-Regular.ttf")
     bold = os.path.join(FONTS_DIR, "NotoSansJP-Bold.ttf")
@@ -46,17 +56,19 @@ def _register_fonts() -> tuple[str, str]:
 
     if os.path.exists(regular):
         try:
-            pdfmetrics.registerFont(TTFont("NotoSansJP", regular))
+            idx = _ttc_subfont_index(regular)
+            pdfmetrics.registerFont(TTFont("NotoSansJP", regular, subfontIndex=idx))
             font_name = "NotoSansJP"
-            logger.info("Regular フォント登録成功")
+            logger.info(f"Regular フォント登録成功 (subfontIndex={idx})")
         except Exception as e:
             logger.warning(f"Regular フォント登録失敗: {e}")
 
     if os.path.exists(bold):
         try:
-            pdfmetrics.registerFont(TTFont("NotoSansJP-Bold", bold))
+            idx = _ttc_subfont_index(bold)
+            pdfmetrics.registerFont(TTFont("NotoSansJP-Bold", bold, subfontIndex=idx))
             bold_name = "NotoSansJP-Bold"
-            logger.info("Bold フォント登録成功")
+            logger.info(f"Bold フォント登録成功 (subfontIndex={idx})")
         except Exception as e:
             logger.warning(f"Bold フォント登録失敗: {e}")
 

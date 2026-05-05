@@ -48,13 +48,31 @@ def _find_system_font(bold: bool) -> str | None:
             capture_output=True, text=True,
         )
         fonts = [f for f in result.stdout.strip().splitlines() if f]
-        # NotoSans を優先
+        # NotoSansCJK を優先（Serifは除外）
         for f in fonts:
-            if "Noto" in f:
+            if "NotoSansCJK" in f and "Serif" not in f:
+                return f
+        for f in fonts:
+            if "NotoSans" in f and "Serif" not in f:
+                return f
+        for f in fonts:
+            if "Noto" in f and "Serif" not in f:
                 return f
         return fonts[0] if fonts else None
     except Exception:
         return None
+
+
+def _write_ttc_index(dest: str, source: str) -> None:
+    """TTC ファイルの場合、日本語サブフォントのインデックスをサイドカーファイルに保存。"""
+    if not source.lower().endswith(".ttc"):
+        return
+    # NotoSansCJK TTC のサブフォント順: SC=0, TC=1, JP=2, KR=3
+    idx = 2 if "NotoSansCJK" in source and "jp" not in source.lower() else 0
+    idx_file = dest + ".ttc_idx"
+    with open(idx_file, "w") as f:
+        f.write(str(idx))
+    logger.info(f"TTC subfontIndex={idx} を記録: {idx_file}")
 
 
 def setup() -> None:
@@ -74,6 +92,7 @@ def setup() -> None:
         system_font = _find_system_font(bold=is_bold)
         if system_font:
             shutil.copy(system_font, dest)
+            _write_ttc_index(dest, system_font)
             logger.info(f"システムフォントを使用: {system_font} -> {filename}")
         else:
             logger.warning(f"フォントが見つかりませんでした: {filename}（ASCII フォールバック使用）")
