@@ -16,24 +16,24 @@ PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
 FONTS_DIR = os.path.join(PROJECT_ROOT, "fonts")
 
 CATEGORY_ORDER = [
-    "新サービス・プロダクトリリース",
-    "研究・技術動向",
-    "企業・業界動向",
-    "その他注目トピック",
+    "New Services & Products",
+    "Research & Technology",
+    "Business & Industry",
+    "Other Notable Topics",
 ]
 
 CATEGORY_LABELS = {
-    "新サービス・プロダクトリリース": "[NEW]  新サービス・プロダクトリリース",
-    "研究・技術動向":               "[LAB]  研究・技術動向",
-    "企業・業界動向":               "[BIZ]  企業・業界動向",
-    "その他注目トピック":           "[INFO] その他注目トピック",
+    "New Services & Products": "[NEW]  New Services & Products",
+    "Research & Technology":   "[LAB]  Research & Technology",
+    "Business & Industry":     "[BIZ]  Business & Industry",
+    "Other Notable Topics":    "[INFO] Other Notable Topics",
 }
 
 CATEGORY_COLORS = {
-    "新サービス・プロダクトリリース": HexColor("#1a73e8"),
-    "研究・技術動向":               HexColor("#0f9d58"),
-    "企業・業界動向":               HexColor("#f29900"),
-    "その他注目トピック":           HexColor("#d93025"),
+    "New Services & Products": HexColor("#1a73e8"),
+    "Research & Technology":   HexColor("#0f9d58"),
+    "Business & Industry":     HexColor("#f29900"),
+    "Other Notable Topics":    HexColor("#d93025"),
 }
 
 
@@ -114,16 +114,15 @@ def generate_pdf(topics: list[dict], used_model: str, output_path: str) -> None:
 
     story = []
 
-    # ヘッダー
-    story.append(Paragraph("週次 AI レポート", s["h1"]))
-    story.append(Paragraph(f"対象期間：{period}", s["period"]))
+    story.append(Paragraph("Weekly AI Report", s["h1"]))
+    story.append(Paragraph(f"Period: {period}", s["period"]))
     story.append(HRFlowable(width="100%", thickness=1.5, color=HexColor("#dadce0")))
     story.append(Spacer(1, 6))
 
     # カテゴリ別にグループ化
     grouped: dict[str, list] = {cat: [] for cat in CATEGORY_ORDER}
     for topic in topics:
-        cat = topic.get("category", "その他注目トピック")
+        cat = topic.get("category", "Other Notable Topics")
         grouped.setdefault(cat, []).append(topic)
 
     for cat in CATEGORY_ORDER:
@@ -143,7 +142,7 @@ def generate_pdf(topics: list[dict], used_model: str, output_path: str) -> None:
         story.append(Spacer(1, 4))
 
         for topic in items:
-            title = topic.get("title", "（タイトルなし）")
+            title = topic.get("title", "(no title)")
             summary = topic.get("summary", "")
             url = topic.get("url", "")
 
@@ -162,7 +161,7 @@ def generate_pdf(topics: list[dict], used_model: str, output_path: str) -> None:
     story.append(HRFlowable(width="100%", thickness=0.5, color=HexColor("#dadce0")))
     story.append(Spacer(1, 3))
     story.append(Paragraph(
-        f"使用モデル: {used_model}　|　生成日時: {end_date.strftime('%Y/%m/%d %H:%M')} JST",
+        f"Model: {used_model}  |  Generated: {end_date.strftime('%Y/%m/%d %H:%M')} UTC",
         s["footer"],
     ))
 

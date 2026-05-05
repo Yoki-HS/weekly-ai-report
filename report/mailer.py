@@ -33,13 +33,12 @@ def send_report(pdf_path: str, used_model: str, address: str, password: str) -> 
     msg = MIMEMultipart()
     msg["From"] = address
     msg["To"] = address
-    msg["Subject"] = f"【週次AIレポート】{period}"
+    msg["Subject"] = f"[Weekly AI Report] {period}"
 
     body = (
-        f"週次AIレポートをお届けします。\n\n"
-        f"対象期間: {period}\n"
-        f"使用モデル: {used_model}\n\n"
-        f"添付のPDFをご確認ください。\n"
+        f"Your weekly AI report is attached.\n\n"
+        f"Period: {period}\n"
+        f"Model: {used_model}\n"
     )
     msg.attach(MIMEText(body, "plain", "utf-8"))
 
@@ -63,12 +62,12 @@ def send_error(error_message: str, address: str, password: str) -> None:
     msg = MIMEMultipart()
     msg["From"] = address
     msg["To"] = address
-    msg["Subject"] = "【週次AIレポート】エラーが発生しました"
+    msg["Subject"] = "[Weekly AI Report] Error occurred"
 
     body = (
-        "週次AIレポートの生成に失敗しました。\n\n"
-        f"エラー内容:\n{error_message}\n\n"
-        "GitHub Actions のログを確認してください。\n"
+        "Weekly AI report generation failed.\n\n"
+        f"Error:\n{error_message}\n\n"
+        "Check the GitHub Actions log for details.\n"
     )
     msg.attach(MIMEText(body, "plain", "utf-8"))
 

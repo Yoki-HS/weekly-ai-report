@@ -21,10 +21,10 @@ MAX_RETRIES = 3
 RETRY_WAIT = 2
 
 CATEGORY_NAMES = [
-    "新サービス・プロダクトリリース",
-    "研究・技術動向",
-    "企業・業界動向",
-    "その他注目トピック",
+    "New Services & Products",
+    "Research & Technology",
+    "Business & Industry",
+    "Other Notable Topics",
 ]
 
 
@@ -64,26 +64,26 @@ def _discover_models(client: genai.Client) -> list[str]:
 
 
 def _build_prompt(start_date: str, end_date: str) -> str:
-    return f"""直近1週間（{start_date}〜{end_date}）のLLM・生成AI・AIサービスに関する重要なニュースを収集してください。
+    return f"""Collect the most important news about LLMs, generative AI, and AI services from the past week ({start_date} to {end_date}).
 
-以下の4カテゴリに分けて、合計10件のトピックをまとめてください：
-1. 新サービス・プロダクトリリース（新しいAIモデル、サービス、機能のリリース）
-2. 研究・技術動向（論文、技術的な進歩、ベンチマーク結果など）
-3. 企業・業界動向（企業の動き、提携、投資、規制など）
-4. その他注目トピック（上記に当てはまらない重要なAIニュース）
+Summarize 10 topics across these 4 categories:
+1. New Services & Products (new AI models, services, or feature releases)
+2. Research & Technology (papers, technical advances, benchmark results)
+3. Business & Industry (company moves, partnerships, investments, regulations)
+4. Other Notable Topics (important AI news that doesn't fit above)
 
-各トピックに含めること：
-- タイトル（日本語）
-- カテゴリ名（上記4つのいずれかを正確に）
-- 要約（1〜2文、日本語）
-- 参照URL（実在するURLを必ず含める）
+Each topic must include:
+- title (concise English title)
+- category (use one of the 4 exact category names above)
+- summary (1-2 sentences in English)
+- url (a real, working URL)
 
-以下のJSON配列のみを返してください。マークダウンのコードブロックや説明文は不要です：
+Return ONLY a JSON array with no markdown code fences or explanation:
 [
   {{
-    "category": "新サービス・プロダクトリリース",
-    "title": "タイトル",
-    "summary": "要約文",
+    "category": "New Services & Products",
+    "title": "Topic title",
+    "summary": "Short summary.",
     "url": "https://..."
   }}
 ]"""
@@ -103,10 +103,11 @@ def _normalize_category(raw: str) -> str:
     raw = raw.strip()
     if raw in CATEGORY_NAMES:
         return raw
+    raw_lower = raw.lower()
     for cat in CATEGORY_NAMES:
-        if any(keyword in raw for keyword in cat.split("・")):
+        if any(word.lower() in raw_lower for word in cat.split() if len(word) > 3):
             return cat
-    return "その他注目トピック"
+    return "Other Notable Topics"
 
 
 def fetch_topics(api_key: str) -> tuple[list[dict], str]:
