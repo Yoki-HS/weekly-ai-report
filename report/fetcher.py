@@ -10,10 +10,10 @@ from google.genai import types
 logger = logging.getLogger(__name__)
 
 MODELS = [
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
+    "gemini-2.5-flash-preview-04-17",
+    "gemini-2.5-pro-exp-03-25",
+    "gemini-2.0-flash-001",
+    "gemini-2.0-flash-lite-001",
 ]
 
 MAX_RETRIES = 3
@@ -28,9 +28,7 @@ CATEGORY_NAMES = [
 
 
 def _get_tools(model: str) -> list:
-    if "2.0" in model or "2.5" in model:
-        return [types.Tool(google_search=types.GoogleSearch())]
-    return [types.Tool(google_search_retrieval=types.GoogleSearchRetrieval())]
+    return [types.Tool(google_search=types.GoogleSearch())]
 
 
 def _build_prompt(start_date: str, end_date: str) -> str:
