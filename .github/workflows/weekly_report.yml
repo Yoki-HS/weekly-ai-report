@@ -25,14 +25,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install system fonts (fallback)
-        run: sudo apt-get install -y fonts-noto-cjk
-
       - name: Install Python dependencies
         run: pip install -r requirements.txt
-
-      - name: Set up Japanese fonts
-        run: python report/setup_fonts.py
 
       - name: Generate and send report
         env:

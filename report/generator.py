@@ -1,4 +1,3 @@
-import os
 import logging
 from datetime import datetime, timedelta
 
@@ -7,13 +6,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.colors import HexColor
 from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-
 logger = logging.getLogger(__name__)
-
-PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
-FONTS_DIR = os.path.join(PROJECT_ROOT, "fonts")
 
 CATEGORY_ORDER = [
     "New Services & Products",
@@ -37,46 +30,8 @@ CATEGORY_COLORS = {
 }
 
 
-def _ttc_subfont_index(path: str) -> int:
-    idx_file = path + ".ttc_idx"
-    if os.path.exists(idx_file):
-        try:
-            return int(open(idx_file).read().strip())
-        except Exception:
-            pass
-    return 0
-
-
-def _register_fonts() -> tuple[str, str]:
-    regular = os.path.join(FONTS_DIR, "NotoSansJP-Regular.ttf")
-    bold = os.path.join(FONTS_DIR, "NotoSansJP-Bold.ttf")
-
-    font_name = "Helvetica"
-    bold_name = "Helvetica-Bold"
-
-    if os.path.exists(regular):
-        try:
-            idx = _ttc_subfont_index(regular)
-            pdfmetrics.registerFont(TTFont("NotoSansJP", regular, subfontIndex=idx))
-            font_name = "NotoSansJP"
-            logger.info(f"Regular フォント登録成功 (subfontIndex={idx})")
-        except Exception as e:
-            logger.warning(f"Regular フォント登録失敗: {e}")
-
-    if os.path.exists(bold):
-        try:
-            idx = _ttc_subfont_index(bold)
-            pdfmetrics.registerFont(TTFont("NotoSansJP-Bold", bold, subfontIndex=idx))
-            bold_name = "NotoSansJP-Bold"
-            logger.info(f"Bold フォント登録成功 (subfontIndex={idx})")
-        except Exception as e:
-            logger.warning(f"Bold フォント登録失敗: {e}")
-
-    return font_name, bold_name
-
-
 def generate_pdf(topics: list[dict], used_model: str, output_path: str) -> None:
-    font_name, bold_name = _register_fonts()
+    font_name, bold_name = "Helvetica", "Helvetica-Bold"
 
     end_date = datetime.now()
     start_date = end_date - timedelta(days=7)
