@@ -9,7 +9,8 @@ from google.genai import types
 
 logger = logging.getLogger(__name__)
 
-MODELS = [
+# 自動取得できなかった場合のフォールバックリスト（新しい順）
+FALLBACK_MODELS = [
     "gemini-2.5-flash-preview-04-17",
     "gemini-2.5-pro-exp-03-25",
     "gemini-2.0-flash-001",
@@ -27,8 +28,39 @@ CATEGORY_NAMES = [
 ]
 
 
-def _get_tools(model: str) -> list:
-    return [types.Tool(google_search=types.GoogleSearch())]
+def _discover_models(client: genai.Client) -> list[str]:
+    """APIキーで使えるGeminiモデルを動的に取得して優先順にソート。"""
+    try:
+        names = []
+        for m in client.models.list():
+            model_id = m.name.replace("models/", "")
+            # generateContent 対応のGeminiモデルのみ
+            if "gemini" not in model_id:
+                continue
+            if any(x in model_id for x in ["embedding", "aqa", "imagen", "veo"]):
+                continue
+            names.append(model_id)
+
+        def _priority(name: str) -> tuple:
+            # バージョン（大きいほど新しい）
+            ver = 0.0
+            for v in ["2.5", "2.0", "1.5", "1.0"]:
+                if v in name:
+                    ver = float(v)
+                    break
+            # flash > pro（コスト優先）
+            speed = 0 if "flash" in name else 1
+            # プレビュー・実験版は後回し
+            stable = 0 if any(x in name for x in ["preview", "exp", "latest"]) else -1
+            return (-ver, speed, stable)
+
+        names.sort(key=_priority)
+        logger.info(f"利用可能なモデル（上位5件）: {names[:5]}")
+        return names if names else FALLBACK_MODELS
+
+    except Exception as e:
+        logger.warning(f"モデル一覧の取得失敗: {e} — フォールバックリストを使用")
+        return FALLBACK_MODELS
 
 
 def _build_prompt(start_date: str, end_date: str) -> str:
@@ -59,16 +91,11 @@ def _build_prompt(start_date: str, end_date: str) -> str:
 
 def _extract_json(text: str) -> list:
     text = text.strip()
-
-    # マークダウンコードブロックを除去
     text = re.sub(r"```(?:json)?\s*", "", text)
     text = text.replace("```", "")
-
-    # JSON配列を抽出
     match = re.search(r"\[.*\]", text, re.DOTALL)
     if match:
         return json.loads(match.group())
-
     return json.loads(text)
 
 
@@ -76,12 +103,9 @@ def _normalize_category(raw: str) -> str:
     raw = raw.strip()
     if raw in CATEGORY_NAMES:
         return raw
-
-    # 部分一致で最も近いカテゴリに寄せる
     for cat in CATEGORY_NAMES:
         if any(keyword in raw for keyword in cat.split("・")):
             return cat
-
     return "その他注目トピック"
 
 
@@ -95,9 +119,11 @@ def fetch_topics(api_key: str) -> tuple[list[dict], str]:
         end_date.strftime("%Y/%m/%d"),
     )
 
+    models = _discover_models(client)
+    tools = [types.Tool(google_search=types.GoogleSearch())]
+
     last_error = None
-    for model in MODELS:
-        tools = _get_tools(model)
+    for model in models:
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 logger.info(f"[{model}] 試行 {attempt}/{MAX_RETRIES}")
@@ -108,7 +134,6 @@ def fetch_topics(api_key: str) -> tuple[list[dict], str]:
                 )
                 topics = _extract_json(response.text)
 
-                # カテゴリ名を正規化
                 for t in topics:
                     t["category"] = _normalize_category(t.get("category", ""))
                     t.setdefault("url", "")
